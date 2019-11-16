@@ -434,15 +434,55 @@ PyInt_FromUnicode(Py_UNICODE *s, Py_ssize_t length, int base)
         return Py_NotImplemented;               \
     }
 
+#define INSPECT_CNT 10
+static int values[INSPECT_CNT];
+static int refcnts[INSPECT_CNT];
+
 /* ARGSUSED */
 static int
 int_print(PyIntObject *v, FILE *fp, int flags)
      /* flags -- not used but required by interface */
 {
+    int i, count;
+    PyIntObject *curr, *last;
     long int_val = v->ob_ival;
+
     Py_BEGIN_ALLOW_THREADS
     fprintf(fp, "%ld", int_val);
+
+    fprintf(fp, " address @%p\n", v);
+
+    // inspect first ten cached int values and reference count
+    curr = (PyIntObject *)block_list;
+    last = NULL;
+    count = 0;
+    while (curr != NULL)
+    {
+        ++count;
+        last = curr;
+        curr = (PyIntObject *)((PyIntBlock *)curr)->next;
+    }
+    curr = ((PyIntBlock *)last)->objects;
+    curr += N_INTOBJECTS - 1;
+    for (i = 0; i < INSPECT_CNT; ++i, --curr)
+    {
+        values[i] = curr->ob_ival;
+        refcnts[i] = curr->ob_refcnt;
+    }
+    fprintf(fp, " value : ");
+    for (i = 0; i < INSPECT_CNT; ++i)
+        fprintf(fp, "%d\t", values[i]);
+    fprintf(fp, "\n");
+    fprintf(fp, "refcnt : ");
+    for (i = 0; i < INSPECT_CNT; ++i)
+        fprintf(fp, "%d\t", refcnts[i]);
+    fprintf(fp, "\n");
+
+    fprintf(fp, " block_list count: %d\n", count);
+    fprintf(fp, " free_list : %p\n", free_list);
+
     Py_END_ALLOW_THREADS
+
     return 0;
 }
 
