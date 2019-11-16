@@ -1021,6 +1021,8 @@ string_str(PyObject *s)
 static Py_ssize_t
 string_length(PyStringObject *a)
 {
+    printf("address : %p\n", a);
+    printf("refcnt : %d\n", a->ob_refcnt);
     return Py_SIZE(a);
 }
 
