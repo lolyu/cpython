@@ -306,6 +306,7 @@ list_print(PyListObject *op, FILE *fp, int flags)
 	}
 	fprintf(fp, "]");
 	Py_ReprLeave((PyObject *)op);
+	fprintf(fp, "\nallocated %d, ob_size %d\n", op->allocated, op->ob_size);
 	return 0;
 }
 
