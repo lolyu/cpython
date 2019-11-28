@@ -534,6 +534,42 @@ insertdict_by_entry(register PyDictObject *mp, PyObject *key, long hash,
     return 0;
 }
 
+/*
+Print internal slots in dictionary.
+*/
+static void showdict(PyDictObject *mp)
+{
+    PyDictEntry *ep = mp->ma_table;
+    int count = mp->ma_mask + 1;
+    int i;
+    printf("  key : ");
+    for (i = 0; i < count; ++i) {
+        PyObject *key = ep->me_key;
+        if (key == NULL)
+            printf("NULL");
+        else {
+            if (key == dummy)
+                printf("dummy");
+            else
+                (key->ob_type)->tp_print(key, stdout, 0);
+        }
+        printf("\t");
+        ++ep;
+    }
+    printf("\nvalue : ");
+    ep = mp->ma_table;
+    for (i = 0; i < count; ++i) {
+        PyObject *value = ep->me_value;
+        if (value == NULL)
+            printf("NULL");
+        else
+            (value->ob_type)->tp_print(value, stdout, 0);
+        printf("\t");
+        ++ep;
+    }
+    printf("\n");
+}
+
 
 /*
 Internal routine to insert a new item into the table.
@@ -544,16 +580,27 @@ Returns -1 if an error occurred, or 0 on success.
 static int
 insertdict(register PyDictObject *mp, PyObject *key, long hash, PyObject *value)
 {
-    register PyDictEntry *ep;
+    int ret;
+    register PyDictEntry *ep, *pr;
 
     assert(mp->ma_lookup != NULL);
+
     ep = mp->ma_lookup(mp, key, hash);
     if (ep == NULL) {
         Py_DECREF(key);
         Py_DECREF(value);
         return -1;
     }
-    return insertdict_by_entry(mp, key, hash, ep, value);
+    ret = insertdict_by_entry(mp, key, hash, ep, value);
+
+    PyObject *str = PyString_FromString("PR");
+    long strhash = PyObject_Hash(str);
+    pr = mp->ma_lookup(mp, str, strhash);
+    if (pr->me_value && PyInt_Check(key)) {
+        printf("insert %ld\n", ((PyIntObject*)key)->ob_ival);
+        showdict(mp);
+    }
+    return ret;
 }
 
 /*
