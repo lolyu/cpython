@@ -1848,17 +1848,25 @@ PyEval_EvalFrameEx(PyFrameObject *f, int throwflag)
 				Py_XINCREF(x);
 			}
 			else {
-				x = PyObject_GetItem(v, w);
-				if (x == NULL && PyErr_Occurred()) {
-					if (!PyErr_ExceptionMatches(PyExc_KeyError))
-						break;
-					PyErr_Clear();
-				}
-			}
+			    x = PyObject_GetItem(v, w);
+                if (x == NULL && PyErr_Occurred()) {
+                    if (!PyErr_ExceptionMatches(PyExc_KeyError))
+                        break;
+                    PyErr_Clear();
+                }
+            }
+			PyObject* stdout = PySys_GetObject("stdout");
+			char buffer[256] = {0};
+            sprintf(buffer, "[LOAD_NAME] : Search PyStringObject %s in local namespace... %s\n", PyString_AsString(w), x == NULL ? "False" : "Success");
+			PyFile_WriteString(buffer, stdout);
 			if (x == NULL) {
 				x = PyDict_GetItem(f->f_globals, w);
+				sprintf(buffer, "[LOAD_NAME] : Search PyStringObject %s in global namespace... %s\n", PyString_AsString(w), x == NULL ? "False" : "Success");
+                PyFile_WriteString(buffer, stdout);
 				if (x == NULL) {
 					x = PyDict_GetItem(f->f_builtins, w);
+                    sprintf(buffer, "[LOAD_NAME] : Search PyStringObject %s in builtin namespace... %s\n", PyString_AsString(w), x == NULL ? "False" : "Success");
+                    PyFile_WriteString(buffer, stdout);
 					if (x == NULL) {
 						format_exc_check_arg(
 							    PyExc_NameError,
