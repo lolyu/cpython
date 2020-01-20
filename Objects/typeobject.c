@@ -3331,6 +3331,11 @@ PyType_Ready(PyTypeObject *type)
 			goto error;
 		type->tp_dict = dict;
 	}
+	else {
+	    PyObject *result = dict->ob_type->tp_repr(dict);
+	    printf("Inspecting initial dictionary of class %s\n", type->tp_name);
+	    printf("%s\n", ((PyStringObject*)result)->ob_sval);
+	}
 
 	/* Add type-specific descriptors to tp_dict */
 	if (add_operators(type) < 0)
